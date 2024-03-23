@@ -27,7 +27,7 @@ router.route("/publish").post(
   ]),
   publishVideo
 );
-
+router.route("/").get(getAllVideos);
 router
   .route("/:videoId")
   .get(getVideoById)
