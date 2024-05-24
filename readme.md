@@ -1,4 +1,4 @@
-# YouTube Backend Clone API
+# Vid-Sync Backend API
 
 This is a backend clone of YouTube, featuring a comprehensive API to replicate the functionality of the popular video-sharing platform. With this API, developers can access, manage, and manipulate various aspects of video content, user accounts, comments, and more.
 
