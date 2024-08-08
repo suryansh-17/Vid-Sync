@@ -8,10 +8,16 @@ import mongoose from "mongoose";
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
+    console.log("ACCESS_TOKEN_SECRET:", process.env.ACCESS_TOKEN_SECRET);
+    console.log("ACCESS_TOKEN_EXPIRY:", process.env.ACCESS_TOKEN_EXPIRY);
+    console.log("REFRESH_TOKEN_SECRET:", process.env.REFRESH_TOKEN_SECRET);
+    console.log("REFRESH_TOKEN_EXPIRY:", process.env.REFRESH_TOKEN_EXPIRY);
     const user = await User.findById(userId);
+    console.log(user, "user");
     const accessToken = user.generateAccessToken();
+    console.log(accessToken, "accessToken");
     const refreshToken = user.generateRefreshToken();
-
+    console.log(refreshToken, "refreshToken");
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
 
@@ -19,16 +25,18 @@ const generateAccessAndRefereshTokens = async (userId) => {
   } catch (error) {
     throw new ApiError(
       500,
-      "Something went wrong while generating referesh and access token"
+      "Something went wrong while generating referesh and access token",
+      error
     );
   }
 };
 
 const registerUser = asyncHandler(async (req, res) => {
+  console.log(req.body);
   //1.get user info from frontend
 
   const { username, email, password, fullName } = req.body;
-
+  console.log(username, email, password, fullName);
   //2.validation (not empty ,etc.)
   if (
     [fullName, email, username, password].some((field) => field?.trim() === "")
@@ -40,14 +48,14 @@ const registerUser = asyncHandler(async (req, res) => {
   const existedUser = await User.findOne({
     $or: [{ username }, { email }],
   });
-
+  console.log(existedUser, "existedUser");
   if (existedUser) {
     throw new ApiError(409, "User with email or username already exit");
   }
   //4.check if file input done (images ,avatar)
   const avatarLocalPath = req.files?.avatar[0]?.path;
   // const coverImageLocalPath = req.files?.coverImage[0]?.path;
-
+  console.log(avatarLocalPath, "avatarLocalPath");
   let coverImageLocalPath;
   if (
     req.files &&
@@ -64,7 +72,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const avatar = await uploadOnCloudinary(avatarLocalPath);
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
-
+  console.log(avatar, coverImage, "avatar,coverImage");
   if (!avatar) {
     throw new ApiError(400, "avatar file is required");
   }
@@ -78,11 +86,13 @@ const registerUser = asyncHandler(async (req, res) => {
     password,
     username: username.toLowerCase(),
   });
+  console.log(user, "user");
 
   //7.remove password and refresh token field from response
   const createdUser = await User.findById(user._id).select(
     "-password -refreshToken"
   );
+
   //8.check for user creation
   if (!createdUser) {
     throw new ApiError(500, "something went wrong while creating user");
@@ -105,7 +115,7 @@ const loginUser = asyncHandler(async (req, res) => {
   const user = await User.findOne({
     $or: [{ username }, { email }],
   });
-
+  console.log(user, "user");
   if (!user) {
     throw new ApiError(404, "User does not exist");
   }
@@ -230,7 +240,10 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
-  return res.status(200).json(200, req.user, "user fetched successfully");
+  console.log(req.user);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, req.user, "user fetched successfully"));
 });
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
